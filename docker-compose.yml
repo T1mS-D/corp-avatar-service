@@ -17,10 +17,7 @@ services:
       retries: 10
 
   api:
-    build:
-      context: .
-      args:
-        REQUIREMENTS: ${REQUIREMENTS_FILE:-requirements.txt}
+    build: .
     restart: unless-stopped
     env_file: .env
     depends_on:
@@ -33,10 +30,7 @@ services:
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
   worker:
-    build:
-      context: .
-      args:
-        REQUIREMENTS: ${REQUIREMENTS_FILE:-requirements.txt}
+    build: .
     restart: unless-stopped
     env_file: .env
     depends_on:

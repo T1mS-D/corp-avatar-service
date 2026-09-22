@@ -79,7 +79,7 @@ docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install cython numpy==1.26.4 && pip install --no-build-isolation insightface==0.7.3
-pip install -r requirements-core.txt          # или requirements.txt для diffusion-бэкенда
+pip install -r requirements.txt
 # нужен локальный PostgreSQL с БД/пользователем из .env
 uvicorn app.main:app --reload &
 python -m app.worker &
@@ -88,7 +88,7 @@ python -m app.worker &
 ### Тесты
 
 ```bash
-pip install -r requirements-core.txt
+pip install -r requirements.txt
 pytest -q                          # быстрые тесты API и очереди (без моделей), ~1 сек
 RUN_SLOW=1 pytest -q               # + сквозные тесты на реальных InsightFace/rembg (скачает веса)
 ```

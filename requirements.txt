@@ -1,4 +1,43 @@
-# Полный набор зависимостей проекта (ядро + генеративные модели).
-# Для лёгкой CPU-сборки без diffusion используйте requirements-core.txt.
--r requirements-core.txt
--r requirements-ml.txt
+# ============================================================
+# Corporate Avatar Service — зависимости
+# ============================================================
+
+# --- Веб-сервис ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# --- БД (PostgreSQL + SQLAlchemy 2.x) ---
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
+
+# --- Обработка изображений / CV (нужны в обоих режимах: classic и diffusion) ---
+pillow==11.0.0
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+scikit-image==0.24.0
+onnxruntime==1.20.1
+insightface==0.7.3
+rembg==2.0.60
+
+# --- Тесты ---
+pytest==8.3.4
+httpx==0.28.1
+
+# ============================================================
+# Генеративный стек — нужен ТОЛЬКО при PIPELINE_BACKEND=diffusion
+# (замена одежды + мульт-аватар). Требует GPU, без него работает
+# очень медленно. Если GPU нет и diffusion не планируется —
+# можно закомментировать блок ниже, сервис в режиме classic
+# запустится и без него.
+# ============================================================
+torch==2.5.1
+torchvision==0.20.1
+diffusers==0.32.1
+transformers==4.47.1
+accelerate==1.2.1
+safetensors==0.4.5
+peft==0.14.0
+huggingface_hub==0.27.0
