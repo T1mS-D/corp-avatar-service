@@ -1,0 +1,40 @@
+# Секреты и окружение
+.env
+.env.*
+!.env.example
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+# Данные и модели (тяжёлые, не для git)
+data/
+storage/
+models/
+.cache/
+*.onnx
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+# Логи, IDE, ОС
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Артефакты 1С (собранные расширения и временные файлы)
+*.cfe
+*.cf
+*.1CD
+onec/build/
+# Видео-демо кладём во внешнее хранилище, ссылку — в README
+*.mp4
+*.mov

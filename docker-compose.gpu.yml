@@ -1,0 +1,12 @@
+# Надстройка для GPU NVIDIA (нужен nvidia-container-toolkit на хосте):
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+# и в .env: PIPELINE_BACKEND=diffusion
+services:
+  worker:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

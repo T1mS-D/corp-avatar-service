@@ -1,0 +1,9 @@
+# Генеративный стек (нужен только для PIPELINE_BACKEND=diffusion, лучше с GPU NVIDIA)
+torch==2.5.1
+torchvision==0.20.1
+diffusers==0.32.1
+transformers==4.47.1
+accelerate==1.2.1
+safetensors==0.4.5
+peft==0.14.0
+huggingface_hub==0.27.0

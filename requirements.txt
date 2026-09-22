@@ -1,0 +1,4 @@
+# Полный набор зависимостей проекта (ядро + генеративные модели).
+# Для лёгкой CPU-сборки без diffusion используйте requirements-core.txt.
+-r requirements-core.txt
+-r requirements-ml.txt
