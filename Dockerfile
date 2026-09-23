@@ -9,7 +9,12 @@ ENV PYTHONUNBUFFERED=1 \
     HF_HOME=/models/hf \
     STORAGE_DIR=/data
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# В WSL2 IPv6 часто битый/медленный: apt пробует IPv6 на каждый пакет, ждёт
+# тайм-аут и только потом откатывается на IPv4 — на полусотне мелких пакетов
+# это превращается в 10+ минут вместо секунд. Форсируем IPv4 и включаем ретраи.
+RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4 \
+    && echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/99retries \
+    && apt-get update && apt-get install -y --no-install-recommends \
         gcc g++ python3-dev libgl1 libglib2.0-0 curl \
     && rm -rf /var/lib/apt/lists/*
 
