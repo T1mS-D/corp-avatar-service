@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # Один образ для API и воркера (команда задаётся в docker-compose).
 FROM python:3.11-slim
 
@@ -10,22 +12,30 @@ ENV PYTHONUNBUFFERED=1 \
     STORAGE_DIR=/data
 
 # В WSL2 IPv6 часто битый/медленный: apt пробует IPv6 на каждый пакет, ждёт
-# тайм-аут и только потом откатывается на IPv4 — на полусотне мелких пакетов
-# это превращается в 10+ минут вместо секунд. Форсируем IPv4 и включаем ретраи.
-RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4 \
+# тайм-аут и только потом откатывается на IPv4. Форсируем IPv4, включаем
+# ретраи и ЖЁСТКИЕ таймауты (30с), чтобы apt не висел минутами на "Ign:".
+# Cache mounts ускоряют повторные сборки — пакеты не скачиваются заново.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4 \
     && echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/99retries \
-    && apt-get update && apt-get install -y --no-install-recommends \
-        gcc g++ python3-dev libgl1 libglib2.0-0 curl \
-    && rm -rf /var/lib/apt/lists/*
+    && echo 'Acquire::http::Timeout "30";' > /etc/apt/apt.conf.d/99timeout \
+    && echo 'Acquire::https::Timeout "30";' >> /etc/apt/apt.conf.d/99timeout \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        gcc g++ python3-dev libgl1 libglib2.0-0 curl
 
 WORKDIR /app
 
-# insightface собирает Cython-расширение: ему нужны numpy и cython до сборки
-RUN pip install cython numpy==1.26.4 setuptools wheel \
+# insightface собирает Cython-расширение: ему нужны numpy и cython до сборки.
+# Кэш pip сохраняется между сборками, чтобы не тянуть пакеты заново.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install cython numpy==1.26.4 setuptools wheel \
     && pip install --no-build-isolation insightface==0.7.3
 
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 COPY app ./app
 COPY assets ./assets
