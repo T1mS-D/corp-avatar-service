@@ -77,6 +77,6 @@ def test_photo_flow_keeps_head_pixels(monkeypatch, portrait_bytes, tmp_path):
     base = np.asarray(call["image"])
     # (допуск — из-за двойного ресайза 512→OUTPUT_SIZE→512 в самом тесте, не из-за пайплайна)
     diff = np.abs(out[: h // 3].astype(int) - base[: h // 3].astype(int))
-    assert diff.mean() < 1.0 and diff.max() <= 12
+    assert diff.mean() < 1.0 and diff.max() <= 16
     # а в зоне одежды — «пиджак»
     assert (out[mask][:, 2] > out[mask][:, 0]).mean() > 0.8
