@@ -1,8 +1,16 @@
 # Надстройка для GPU NVIDIA (нужен nvidia-container-toolkit на хосте):
 #   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
 # и в .env: PIPELINE_BACKEND=diffusion
+#
+# GPU-стек (torch/diffusers, requirements-diffusion.txt) ставится ТОЛЬКО воркеру —
+# именно он выполняет пайплайн обработки; api эти пакеты никогда не нужны,
+# даже когда PIPELINE_BACKEND=diffusion, поэтому api-образ остаётся лёгким.
 services:
   worker:
+    build:
+      context: .
+      args:
+        EXTRA_REQUIREMENTS: requirements-diffusion.txt
     deploy:
       resources:
         reservations:

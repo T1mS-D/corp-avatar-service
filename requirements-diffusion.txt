@@ -1,0 +1,20 @@
+# Генеративный стек — нужен ТОЛЬКО при PIPELINE_BACKEND=diffusion
+# (замена одежды + мульт-аватар). Требует GPU NVIDIA.
+#
+# Устанавливается ОТДЕЛЬНО от requirements.txt, а не как часть общего списка:
+# без --index-url pip на Linux ставит CUDA-сборку torch с PyPI — это 2-3 ГБ
+# ОДНОГО пакета. На машине без GPU это даром потраченные время и место на диске,
+# а на машине с GPU это, наоборот, обязательный шаг. Поэтому выбор ставить этот
+# файл или нет — осознанное решение при сборке (см. docker-compose.gpu.yml),
+# а не случайность в духе "а вдруг пригодится".
+#
+# Собирается автоматически при сборке через docker-compose.gpu.yml.
+# Руками: pip install -r requirements.txt -r requirements-diffusion.txt
+torch==2.5.1
+torchvision==0.20.1
+diffusers==0.32.1
+transformers==4.47.1
+accelerate==1.2.1
+safetensors==0.4.5
+peft==0.14.0
+huggingface_hub==0.27.0

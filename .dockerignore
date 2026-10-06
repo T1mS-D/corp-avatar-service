@@ -6,6 +6,7 @@ models
 __pycache__
 *.pyc
 .venv
+venv
 tests
 docs
 onec

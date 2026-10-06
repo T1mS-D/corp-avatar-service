@@ -34,8 +34,18 @@ class DiffusionPipeline(AvatarPipeline):
 
     # ------------------------------------------------------------------ загрузка моделей
     def _torch(self):
-        import torch
-
+        try:
+            import torch
+        except ImportError as e:
+            raise RuntimeError(
+                "PIPELINE_BACKEND=diffusion требует пакеты torch/diffusers/transformers из "
+                "requirements-diffusion.txt — они НЕ входят в основной requirements.txt (это ~2-3 ГБ "
+                "CUDA-сборки torch, оправданные только при наличии GPU). Установите: "
+                "pip install -r requirements.txt -r requirements-diffusion.txt, либо при сборке "
+                "через Docker используйте docker-compose.gpu.yml, который делает это автоматически. "
+                "Также убедитесь, что доступен GPU, прежде чем использовать этот режим — он не "
+                "тестировался на реальном оборудовании в ходе разработки (см. README → Известные ограничения)."
+            ) from e
         return torch
 
     def _finish_load(self, pipe):
@@ -86,12 +96,34 @@ class DiffusionPipeline(AvatarPipeline):
         return torch.cat([neg, ref]).to(dtype=self._dtype(), device=dev)
 
     def _repaint_mask(self, person: np.ndarray, face_c: FaceInfo, size: int) -> np.ndarray:
-        """Маска одежды: тело ниже шеи (расширенное на «объём» пиджака). Голова в маску не попадает."""
+        """Маска одежды: тело ниже шеи (расширенное на «объём» пиджака). Голова в маску не попадает.
+
+        Линия отреза наклоняется вместе с головой (угол roll), а не остаётся строго
+        горизонтальной: при наклоне головы набок горизонтальная линия проходила бы по-разному
+        относительно реальной шеи слева и справа — где-то задевая щёку, где-то оставляя
+        нетронутый воротник. Угол клампится до ±45°, чтобы не ломать маску на экстремальных,
+        едва ли реалистичных значениях.
+
+        Известное ограничение: метод по-прежнему отличает «тело» от «фона» только по маске
+        сегментации и Y-координате относительно шеи — он НЕ умеет отличать длинные распущенные
+        волосы (которые окажутся ниже линии шеи и попадут в зону перекраски как часть одежды)
+        от самой одежды. Корректное решение требует отдельной модели разметки волос/лица
+        (face/hair parsing) и не реализовано в этой версии."""
         body = (person > 0.5).astype(np.uint8)
         k = max(3, int(size * 0.04))
         body = cv2.dilate(body, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+
         neck_y = face_c.chin_y + self.s.neck_offset_ratio * face_c.face_height
-        body[: int(neck_y), :] = 0
+        roll_deg = max(-45.0, min(45.0, face_c.roll)) if face_c.roll is not None else 0.0
+        roll_rad = np.radians(roll_deg)
+
+        h, w = body.shape
+        xs = np.arange(w, dtype=np.float32)
+        # Линия reза: y = neck_y + (x - center_x) * tan(roll) — наклонена вокруг центра лица.
+        y_cut = neck_y + (xs - face_c.center[0]) * np.tan(roll_rad)
+        yy = np.arange(h, dtype=np.float32)[:, None]
+        body[yy < y_cut[None, :]] = 0
+
         return body.astype(np.float32)
 
     def _gen(self, seed: int):

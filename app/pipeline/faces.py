@@ -14,6 +14,7 @@ class FaceInfo:
     embedding: np.ndarray          # L2-нормированный ArcFace, 512
     yaw: float | None
     pitch: float | None
+    roll: float | None              # наклон головы набок (используется для наклона линии реза в diffusion.py)
     chin_y: float                  # y нижней точки подбородка
     face_height: float
     face_width: float
@@ -54,8 +55,12 @@ class FaceAnalyzer:
             lm = getattr(f, "landmark_2d_106", None)
             # точки 0..32 — контур лица, 16 — подбородок
             chin_y = float(lm[0:33, 1].max()) if lm is not None else y2
-            pose = getattr(f, "pose", None)
-            pitch, yaw = (float(pose[0]), float(pose[1])) if pose is not None else (None, None)
+            pose = getattr(f, "pose", None)  # InsightFace отдаёт [pitch, yaw, roll]
+            if pose is not None:
+                pitch, yaw = float(pose[0]), float(pose[1])
+                roll = float(pose[2]) if len(pose) > 2 else None
+            else:
+                pitch = yaw = roll = None
             out.append(
                 FaceInfo(
                     bbox=(x1, y1, x2, y2),
@@ -63,6 +68,7 @@ class FaceAnalyzer:
                     embedding=np.asarray(f.normed_embedding, dtype=np.float32),
                     yaw=yaw,
                     pitch=pitch,
+                    roll=roll,
                     chin_y=chin_y,
                     face_height=chin_y - y1,
                     face_width=x2 - x1,
